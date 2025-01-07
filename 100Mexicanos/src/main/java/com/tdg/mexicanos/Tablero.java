@@ -7,12 +7,19 @@ package com.tdg.mexicanos;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 import com.tdg.mexicanos.sonidos.Sonidos;
 
@@ -31,7 +38,8 @@ public class Tablero extends javax.swing.JPanel {
     JLabel[] tachesEquipo2 = new JLabel[3];
     private JTable tablaRespuestas;
     private DefaultTableModel modeloTabla;
-    public static boolean pausa = true;///////cambiar a false para que funja :p
+    public static boolean pausa = true;/////// cambiar a false para que funja :p
+    private int totalPuntos = 0;
 
     /**
      * Creates new form Tablero
@@ -54,10 +62,6 @@ public class Tablero extends javax.swing.JPanel {
 
         tacheGris = new ImageIcon(getClass().getResource("/assets/images/tacheGris.png"));
         tacheRojo = new ImageIcon(getClass().getResource("/assets/images/tacheRojo.png"));
-        // tiempo.setBounds(width / 2, 20, 250, 120);
-        // tiempo.setFont(new java.awt.Font("Tahoma", 0, 150));
-        // tiempo.setForeground(new java.awt.Color(224, 118, 47));
-        // this.add(tiempo);
 
         puntos1.setBounds(20, 20, 250, 120);
         puntos1.setFont(new java.awt.Font("Tahoma", 0, 80));
@@ -67,14 +71,6 @@ public class Tablero extends javax.swing.JPanel {
         puntos1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         puntos1.setVerticalTextPosition(javax.swing.SwingConstants.CENTER);
         this.add(puntos1);
-
-        for (int i = 0; i < tachesEquipo1.length; i++) {
-            ImageIcon resizedTacheGris = new ImageIcon(
-            tacheGris.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH));
-            tachesEquipo1[i] = new JLabel(resizedTacheGris);
-            tachesEquipo1[i].setBounds(20, 90 + (i * 260), 250, 250);
-            this.add(tachesEquipo1[i]);
-        }
 
         puntos2.setBounds(width - 290, 20, 250, 120);
         puntos2.setFont(new java.awt.Font("Tahoma", 0, 80));
@@ -86,31 +82,49 @@ public class Tablero extends javax.swing.JPanel {
         puntos2.setVerticalTextPosition(javax.swing.SwingConstants.CENTER);
         this.add(puntos2);
 
-        for (int i = 0; i < tachesEquipo2.length; i++) {
-            ImageIcon resizedTacheGris = new ImageIcon(
-            tacheGris.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH));
-            tachesEquipo2[i] = new JLabel(resizedTacheGris);
-            tachesEquipo2[i].setBounds(width - 290, 90 + (i * 260), 250, 250);
-            this.add(tachesEquipo2[i]);
-        }
-
         puntosT.setBounds(width / 2 - 100, 20, 250, 120);
         puntosT.setFont(new java.awt.Font("Tahoma", 0, 150));
         puntosT.setForeground(new java.awt.Color(247, 245, 134));
         puntosT.setText("100");
         this.add(puntosT);
+        modeloTabla = new DefaultTableModel(new Object[] { "RESPUESTAS", "PUNTOS" }, 0) {
+            @Override
+            public void addRow(Object[] rowData) {
+                if (getRowCount() < 8) {
+                    super.addRow(rowData);
+                }
+            }
+        };
 
-        modeloTabla = new DefaultTableModel(new Object[]{"RESPUESTAS", "PUNTOS"}, 0);
         tablaRespuestas = new JTable(modeloTabla);
-        tablaRespuestas.setFont(new java.awt.Font("Tahoma", 0, 20));
-        tablaRespuestas.setRowHeight(30);
+        tablaRespuestas.setFont(new java.awt.Font("Tahoma", 0, 40));
+        tablaRespuestas.setRowHeight(60);
         tablaRespuestas.setShowGrid(true);
 
-        // ScrollPane para la tabla
+
+        // Centrar texto en las celdas
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+
+        for (int i = 0; i < tablaRespuestas.getColumnCount(); i++) {
+            tablaRespuestas.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
         JScrollPane scrollPane = new JScrollPane(tablaRespuestas);
         int tableWidth = 700;
-        scrollPane.setBounds((getWidth() - tableWidth) / 2, 300, tableWidth, 270);
+        scrollPane.setBounds((getWidth() - tableWidth) / 2, 200, tableWidth, 510);
         add(scrollPane);
+        // Add taches at the bottom, centered horizontally
+        int tacheSize = 250;
+        int totalTachesWidth = tacheSize * 3;
+        int startX = (width - totalTachesWidth) / 2;
+        for (int i = 0; i < 3; i++) {
+            ImageIcon resizedTacheGris = new ImageIcon(
+                    tacheGris.getImage().getScaledInstance(tacheSize, tacheSize, Image.SCALE_SMOOTH));
+            tachesEquipo1[i] = new JLabel(resizedTacheGris);
+            tachesEquipo1[i].setBounds(startX + (i * tacheSize), height - tacheSize - 50, tacheSize, tacheSize);
+            this.add(tachesEquipo1[i]);
+        }
 
         setVisible(true);
 
@@ -125,9 +139,27 @@ public class Tablero extends javax.swing.JPanel {
         }
     }
 
+    public void agregarFila(Object[] fila) {
+        modeloTabla.addRow(fila);
+    }
+
+    public void agregarFilaOrdenada(Object[] fila) {
+        modeloTabla.addRow(fila);
+        ordenarTablaPorPuntos();
+    }
+
+    private void ordenarTablaPorPuntos() {
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(modeloTabla);
+        tablaRespuestas.setRowSorter(sorter);
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        sortKeys.add(new RowSorter.SortKey(1, SortOrder.DESCENDING));
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
+    }
+
     public void iniciarCronometro() {
         Thread cronometro = new Thread(() -> {
-            int segundos = 11;
+            int segundos = 6;
             while (!Thread.currentThread().isInterrupted()) {
                 while (!pausa) {
                     try {
@@ -161,14 +193,24 @@ public class Tablero extends javax.swing.JPanel {
         pausa = false;
     }
 
-    //public void 
+    // public void
 
     public void marcarError(int equipo, int numeroError) {
         if (equipo == 1) {
-            tachesEquipo1[numeroError-1].setIcon(tacheRojo);
+            tachesEquipo1[numeroError - 1].setIcon(tacheRojo);
         } else if (equipo == 2) {
-            tachesEquipo2[numeroError-1].setIcon(tacheRojo);
+            tachesEquipo2[numeroError - 1].setIcon(tacheRojo);
         }
+    }
+
+    public void actualizarPuntos(int puntos) {
+        totalPuntos += puntos;
+        puntosT.setText(String.valueOf(totalPuntos));
+    }
+
+public void reiniciarPuntos() {
+        totalPuntos = 0;
+        puntosT.setText("100");
     }
 
     /**

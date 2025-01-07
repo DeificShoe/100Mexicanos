@@ -40,4 +40,27 @@ public class Sonidos {
             clip.start();
         }
     }
+
+    public void reproducirWinRonda() {
+        Clip clip = cargarSonido("winRonda.wav");
+        if (clip != null) {
+            clip.start();
+        }
+    }
+
+    public void reproducirRCorrect() {
+        Clip clip = cargarSonido("rCorrect.wav");
+        if (clip != null) {
+            clip.start();
+        }
+    }
+
+    public void reproducirError() {
+        Clip clip = cargarSonido("error.wav");
+        if (clip != null) {
+            clip.start();
+        }
+    }
+
+    
 }
