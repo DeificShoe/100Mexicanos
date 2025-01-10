@@ -5,24 +5,38 @@
 package com.tdg.mexicanos;
 
 import java.awt.Button;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Label;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
 import com.tdg.mexicanos.sonidos.Sonidos;
+
 /**
  *
  * @author emanu
@@ -34,6 +48,10 @@ public class Control extends javax.swing.JPanel {
     private DefaultTableModel modeloTablaControl;
     private Tablero tablero;
     private int tacheCount = 0;
+    private List<List<String[]>> grupos; // Lista para almacenar los grupos
+    private int grupoActual = 0;
+    private Label pregunta = new Label();
+    private JButton finTiempo = new JButton();
     Sonidos sonidoController = new Sonidos();
 
     /**
@@ -47,6 +65,14 @@ public class Control extends javax.swing.JPanel {
         int height = (int) screenSize.getHeight();
         this.setSize(width, height);
         this.setBackground(new java.awt.Color(61, 61, 61));
+
+        // configuracion label de la pregunta
+        pregunta.setBounds(width / 2 - 200, 10, 400, 30);
+        pregunta.setAlignment(Label.CENTER);
+        pregunta.setBackground(new Color(0, 118, 181));
+        pregunta.setForeground(Color.WHITE);
+        pregunta.setFont(new java.awt.Font("Tahoma", 0, 20));
+        this.add(pregunta);
 
         // Crear la tabla editable con columnas "Respuesta" y "Puntos"
         modeloTablaControl = new DefaultTableModel(new Object[] { "RESPUESTAS", "PUNTOS" }, 0) {
@@ -87,7 +113,7 @@ public class Control extends javax.swing.JPanel {
 
         // Add "Asignar" buttons next to each row
         for (int i = 0; i < modeloTablaControl.getRowCount(); i++) {
-            JButton btnAsignarFila = new JButton("Asignar");
+            JButton btnAsignarFila = new BotonEstilizado("Asignar");
             int row = i; // Capture the current row index
             btnAsignarFila.setBounds((getWidth() - tableWidth) / 2 + tableWidth + 10, 70 + (i * 30), 100, 30);
             btnAsignarFila.addActionListener(e -> {
@@ -98,36 +124,102 @@ public class Control extends javax.swing.JPanel {
         }
 
         // Botón para guardar datos
-        JButton btnGuardar = new JButton("Guardar Datos");
+        JButton btnGuardar = new BotonEstilizado("Guardar Datos");
         btnGuardar.setBounds(width / 2 - 100, 400, 200, 50);
         btnGuardar.addActionListener(e -> guardarDatos());
         this.add(btnGuardar);
 
         // Botón para cargar datos
-        JButton btnCargar = new JButton("Cargar Datos");
+        JButton btnCargar = new BotonEstilizado("Cargar Datos");
         btnCargar.setBounds(width / 2 - 100, 470, 200, 50);
         btnCargar.addActionListener(e -> cargarDatos());
         this.add(btnCargar);
 
+        // boton para retrocedeer pregunta
+        JButton btnRetroceder = new BotonEstilizado("pregunta ant.");
+        btnRetroceder.setBounds(width / 2 - 350, 470, 200, 50);
+        btnRetroceder.addActionListener(e -> cargarGrupoAnterior());
+        this.add(btnRetroceder);
+
+        // Botón para avanzar pregunta
+        JButton btnAvanzar = new BotonEstilizado("sig. pregunta");
+        btnAvanzar.setBounds(width / 2 + 150, 470, 200, 50);
+        btnAvanzar.addActionListener(e -> cargarSiguienteGrupo());
+        this.add(btnAvanzar);
+
         // Botón para marcar taches
-        JButton btnMarcarTache = new JButton("Marcar Tache");
+        JButton btnMarcarTache = new BotonEstilizado("Marcar Tache");
         btnMarcarTache.setBounds(width / 2 - 100, 540, 200, 50);
-        btnMarcarTache.addActionListener(e -> marcarTache());
+        btnMarcarTache.addActionListener(e -> {tablero.iniciarCronometroTaches();});
         this.add(btnMarcarTache);
 
+        // Botón para sonar la campana
+        JButton btnFinTiempo = new BotonEstilizado("poco tiempo");
+        btnFinTiempo.setBounds(width / 2 - 350, 540, 200, 50);
+        btnFinTiempo.addActionListener(e -> tablero.iniciarCronometro());
+        this.add(btnFinTiempo);
+
         // Botones para asignar puntos a cada equipo
-        JButton asignar1 = new JButton("dar puntos eq.1");
+        JButton asignar1 = new BotonEstilizado("dar puntos eq.1");
         asignar1.setBounds(width / 2 - 350, 400, 200, 50);
         asignar1.addActionListener(e -> darPuntos(1));
         this.add(asignar1);
 
-        JButton asignar2 = new JButton("dar puntos eq.2");
+        JButton asignar2 = new BotonEstilizado("dar puntos eq.2");
         asignar2.setBounds(width / 2 + 150, 400, 200, 50);
         asignar2.addActionListener(e -> darPuntos(2));
         this.add(asignar2);
 
         this.setVisible(true);
     }
+
+    public class BotonEstilizado extends JButton {
+
+    private boolean isHovered = false; // Para manejar el estado de hover
+
+    public BotonEstilizado(String texto) {
+        super(texto);
+        setForeground(Color.WHITE); // Color del texto
+        setFont(new Font("Arial", Font.ITALIC, 20)); // Fuente del texto
+        setBorder(BorderFactory.createLineBorder(Color.BLACK, 2)); // Borde negro
+        setFocusPainted(false); // Quitar el enfoque
+        setContentAreaFilled(false); // Permitir personalizar el fondo
+
+        // Listener para detectar el hover
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                isHovered = true;
+                repaint(); // Actualizar la pintura
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                isHovered = false;
+                repaint(); // Actualizar la pintura
+            }
+        });
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Colores del degradado
+        Color colorInicio = isHovered ? new Color(34, 133, 199) : new Color(94, 94, 94); // Gris claro en hover
+        Color colorFin = isHovered ? new Color(94, 94, 94) : new Color(34, 133, 199);   // Azul claro en hover
+
+        // Crear el degradado vertical
+        GradientPaint gradient = new GradientPaint(0, 0, colorInicio, 0, getHeight(), colorFin);
+
+        // Dibujar el fondo con el degradado
+        g2.setPaint(gradient);
+        g2.fillRect(0, 0, getWidth(), getHeight());
+
+        super.paintComponent(g); // Pintar el contenido (texto)
+    }
+}
 
     private void darPuntos(int equipo) {
         if (equipo == 1) {
@@ -138,7 +230,6 @@ public class Control extends javax.swing.JPanel {
         tablero.reiniciarPuntos();
         sonidoController.reproducirWinRonda();
     }
-
 
     private void guardarDatos() {
         JFileChooser fileChooser = new JFileChooser();
@@ -157,21 +248,103 @@ public class Control extends javax.swing.JPanel {
         }
     }
 
+    /*
+     * private void cargarDatos() {
+     * JFileChooser fileChooser = new JFileChooser();
+     * fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
+     * int option = fileChooser.showOpenDialog(this);
+     * if (option == JFileChooser.APPROVE_OPTION) {
+     * File file = fileChooser.getSelectedFile();
+     * try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+     * String line;
+     * modeloTablaControl.setRowCount(0); // Clear existing data
+     * while ((line = reader.readLine()) != null) {
+     * String[] data = line.split(",");
+     * modeloTablaControl.addRow(new Object[] { data[0], Integer.parseInt(data[1])
+     * });
+     * }
+     * } catch (IOException e) {
+     * e.printStackTrace();
+     * }
+     * }
+     * }
+     */
+
     private void cargarDatos() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
         int option = fileChooser.showOpenDialog(this);
         if (option == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
+            grupos = new ArrayList<>(); // Reiniciar la lista de grupos
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                 String line;
-                modeloTablaControl.setRowCount(0); // Clear existing data
+                List<String[]> grupoTemporal = new ArrayList<>();
                 while ((line = reader.readLine()) != null) {
-                    String[] data = line.split(",");
-                    modeloTablaControl.addRow(new Object[] { data[0], Integer.parseInt(data[1]) });
+                    line = line.trim();
+                    if (line.isEmpty() || line.startsWith("(")) {
+                        // Nuevo grupo detectado o comentario
+                        if (!grupoTemporal.isEmpty()) {
+                            grupos.add(grupoTemporal);
+                            grupoTemporal = new ArrayList<>();
+                        }
+                    } else {
+                        // Agregar datos al grupo actual
+                        String[] data = line.split(",");
+                        grupoTemporal.add(new String[] { data[0], data[1] });
+                    }
+                }
+                // Agregar el último grupo si hay datos pendientes
+                if (!grupoTemporal.isEmpty()) {
+                    grupos.add(grupoTemporal);
+                }
+                grupoActual = 0; // Reiniciar el índice
+
+                // Cargar automáticamente el primer grupo y actualizar la etiqueta
+                if (!grupos.isEmpty()) {
+                    cargarGrupoActual();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    // Método para cargar el siguiente grupo
+    private void cargarSiguienteGrupo() {
+        if (grupoActual < grupos.size()) {
+            cargarGrupoActual(); // Cargar los datos del grupo actual
+            grupoActual++; // Pasar al siguiente grupo
+        } else {
+            JOptionPane.showMessageDialog(this, "Ya no hay más preguntas.");
+        }
+    }
+
+    // Método para cargar el grupo anterior
+    private void cargarGrupoAnterior() {
+        if (grupoActual > 0) {
+            grupoActual--; // Retrocede al grupo anterior
+            cargarGrupoActual(); // Cargar los datos del grupo actual
+        } else {
+            JOptionPane.showMessageDialog(this, "Ya estás en la pregunta 1..");
+        }
+    }
+
+    private void cargarGrupoActual() {
+        if (grupoActual >= 0 && grupoActual < grupos.size()) {
+            List<String[]> grupo = grupos.get(grupoActual); // Obtener el grupo actual
+            modeloTablaControl.setRowCount(0); // Limpia la tabla
+
+            if (!grupo.isEmpty()) {
+                // Actualizar la etiqueta con la primera fila del grupo
+                String textoPregunta = grupo.get(0)[0]; // Primera columna de la primera fila
+                pregunta.setText(textoPregunta);
+
+                // Cargar el resto de las filas en la tabla (omitimos la primera fila)
+                for (int i = 1; i < grupo.size(); i++) {
+                    String[] fila = grupo.get(i);
+                    modeloTablaControl.addRow(new Object[] { fila[0], Integer.parseInt(fila[1]) });
+                }
             }
         }
     }
@@ -186,9 +359,9 @@ public class Control extends javax.swing.JPanel {
         }
     }
 
-    private void marcarTache() {
+    void marcarTache() {
         if (tacheCount < 3) {
-            tablero.marcarError(1, tacheCount + 1);
+            tablero.marcarError(tacheCount + 1);
             tacheCount++;
         }
         sonidoController.reproducirError();

@@ -4,6 +4,7 @@
  */
 package com.tdg.mexicanos;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -33,12 +34,13 @@ public class Tablero extends javax.swing.JPanel {
     JLabel puntosT = new javax.swing.JLabel();
     JLabel tiempo = new javax.swing.JLabel();
     Sonidos sonidoController = new Sonidos();
+    Control control = new Control(this);
     ImageIcon rPuntos, tacheGris, tacheRojo;
     JLabel[] tachesEquipo1 = new JLabel[3];
-    JLabel[] tachesEquipo2 = new JLabel[3];
     private JTable tablaRespuestas;
     private DefaultTableModel modeloTabla;
-    public static boolean pausa = true;/////// cambiar a false para que funja :p
+    public static boolean pausa = false;/////// cambiar a false para que funja :p
+    public static boolean pausaTaches = false;/////// cambiar a false para que funja :p
     private int totalPuntos = 0;
 
     /**
@@ -46,7 +48,7 @@ public class Tablero extends javax.swing.JPanel {
      */
     public Tablero() {
         initComponents();
-        iniciarCronometro();
+        // iniciarCronometro();
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int width = (int) screenSize.getWidth();
@@ -85,7 +87,7 @@ public class Tablero extends javax.swing.JPanel {
         puntosT.setBounds(width / 2 - 100, 20, 250, 120);
         puntosT.setFont(new java.awt.Font("Tahoma", 0, 150));
         puntosT.setForeground(new java.awt.Color(247, 245, 134));
-        puntosT.setText("100");
+        puntosT.setText("000");
         this.add(puntosT);
         modeloTabla = new DefaultTableModel(new Object[] { "RESPUESTAS", "PUNTOS" }, 0) {
             @Override
@@ -96,11 +98,31 @@ public class Tablero extends javax.swing.JPanel {
             }
         };
 
-        tablaRespuestas = new JTable(modeloTabla);
-        tablaRespuestas.setFont(new java.awt.Font("Tahoma", 0, 40));
+        tablaRespuestas = new JTable(modeloTabla) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+
+            /*
+             * @Override
+             * public Component prepareRenderer(TableCellRenderer renderer, int row, int
+             * column) {
+             * Component component = super.prepareRenderer(renderer, row, column);
+             * if (component instanceof JComponent) {
+             * ((JComponent) component).setOpaque(false); // Hacer las celdas transparentes
+             * }
+             * return component;
+             * }
+             */
+        };
+        tablaRespuestas.setFont(new java.awt.Font("Tahoma", 1, 40));
+        tablaRespuestas.setOpaque(false);
+        tablaRespuestas.setBackground(new Color(0, 0, 0, 250));
+        tablaRespuestas.setForeground(new Color(250, 130, 32));
+        tablaRespuestas.setGridColor(Color.white);
         tablaRespuestas.setRowHeight(60);
         tablaRespuestas.setShowGrid(true);
-
 
         // Centrar texto en las celdas
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
@@ -112,17 +134,21 @@ public class Tablero extends javax.swing.JPanel {
 
         JScrollPane scrollPane = new JScrollPane(tablaRespuestas);
         int tableWidth = 700;
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
         scrollPane.setBounds((getWidth() - tableWidth) / 2, 200, tableWidth, 510);
         add(scrollPane);
         // Add taches at the bottom, centered horizontally
         int tacheSize = 250;
         int totalTachesWidth = tacheSize * 3;
         int startX = (width - totalTachesWidth) / 2;
+
         for (int i = 0; i < 3; i++) {
             ImageIcon resizedTacheGris = new ImageIcon(
                     tacheGris.getImage().getScaledInstance(tacheSize, tacheSize, Image.SCALE_SMOOTH));
             tachesEquipo1[i] = new JLabel(resizedTacheGris);
-            tachesEquipo1[i].setBounds(startX + (i * tacheSize), height - tacheSize - 50, tacheSize, tacheSize);
+            tachesEquipo1[i].setBounds(startX + (i * tacheSize), height / 2 - tacheSize / 2, tacheSize, tacheSize);
+            tachesEquipo1[i].setVisible(false);
             this.add(tachesEquipo1[i]);
         }
 
@@ -158,6 +184,7 @@ public class Tablero extends javax.swing.JPanel {
     }
 
     public void iniciarCronometro() {
+        System.out.println("Iniciando cronometro");
         Thread cronometro = new Thread(() -> {
             int segundos = 6;
             while (!Thread.currentThread().isInterrupted()) {
@@ -193,13 +220,51 @@ public class Tablero extends javax.swing.JPanel {
         pausa = false;
     }
 
+    public void iniciarCronometroTaches() {
+        System.out.println("Iniciando cronometro taches");
+        Thread cronometroTache = new Thread(() -> {
+            control.marcarTache();
+            reanudarCronometroTaches();
+            int segundos = 3;
+            while (!Thread.currentThread().isInterrupted()) {
+                while (!pausaTaches) {
+                    try {
+                        for (int i = 0; i < 3; i++) {
+                            tachesEquipo1[i].setVisible(true);
+                        }
+                        while (segundos >= 0) {
+                            segundos--;
+                            break;
+                        }
+                        if (segundos == 0) {
+                            for (int i = 0; i < 3; i++) {
+                                tachesEquipo1[i].setVisible(false);
+                            }
+                            segundos = 3;
+                            pausarCronometroTaches();
+                        }
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        System.out.println("Excepcion en hilo " + ex.getMessage());
+                    }
+                }
+            }
+        });
+        cronometroTache.start();
+    }
+
+    public void pausarCronometroTaches() {
+        pausaTaches = true;
+    }
+
+    public void reanudarCronometroTaches() {
+        pausaTaches = false;
+    }
     // public void
 
-    public void marcarError(int equipo, int numeroError) {
-        if (equipo == 1) {
+    public void marcarError(int numeroError) {
+        if (numeroError <= 3) {
             tachesEquipo1[numeroError - 1].setIcon(tacheRojo);
-        } else if (equipo == 2) {
-            tachesEquipo2[numeroError - 1].setIcon(tacheRojo);
         }
     }
 
@@ -208,7 +273,7 @@ public class Tablero extends javax.swing.JPanel {
         puntosT.setText(String.valueOf(totalPuntos));
     }
 
-public void reiniciarPuntos() {
+    public void reiniciarPuntos() {
         totalPuntos = 0;
         puntosT.setText("100");
     }
