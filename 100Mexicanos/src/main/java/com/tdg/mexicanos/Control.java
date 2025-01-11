@@ -6,6 +6,7 @@ package com.tdg.mexicanos;
 
 import java.awt.Button;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GradientPaint;
@@ -32,8 +33,12 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 import com.tdg.mexicanos.sonidos.Sonidos;
 
@@ -53,12 +58,16 @@ public class Control extends javax.swing.JPanel {
     private Label pregunta = new Label();
     private JButton finTiempo = new JButton();
     Sonidos sonidoController = new Sonidos();
-
+    private JTable tablaTablero = Tablero.getTablaRespuestas();
+    private int[] highlightedRow = new int[8]; // Usar un arreglo para que sea mutable
+    
+    DefaultTableCellRenderer renderer;
     /**
      * Creates new form Control
      */
     public Control(Tablero tablero) {
         initComponents();
+        initHigligthRow();
         this.tablero = tablero;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int width = (int) screenSize.getWidth();
@@ -150,7 +159,9 @@ public class Control extends javax.swing.JPanel {
         // Botón para marcar taches
         JButton btnMarcarTache = new BotonEstilizado("Marcar Tache");
         btnMarcarTache.setBounds(width / 2 - 100, 540, 200, 50);
-        btnMarcarTache.addActionListener(e -> {tablero.iniciarCronometroTaches();});
+        btnMarcarTache.addActionListener(e -> {
+            tablero.iniciarCronometroTaches();
+        });
         this.add(btnMarcarTache);
 
         // Botón para sonar la campana
@@ -170,62 +181,96 @@ public class Control extends javax.swing.JPanel {
         asignar2.addActionListener(e -> darPuntos(2));
         this.add(asignar2);
 
+        renderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                // Cambiar color de texto dinámicamente
+                if (row == highlightedRow[row]) {
+                    c.setForeground(new Color(250, 130, 32));
+                } else {
+                    c.setForeground(Color.BLACK);
+                }
+
+                return c;
+            }
+        };
+
         this.setVisible(true);
     }
 
+    private void initHigligthRow(){
+        for (int i = 0; i < highlightedRow.length; i++) {
+            highlightedRow[i] = -1;
+        }
+    }
     public class BotonEstilizado extends JButton {
 
-    private boolean isHovered = false; // Para manejar el estado de hover
+        private boolean isHovered = false; // Para manejar el estado de hover
 
-    public BotonEstilizado(String texto) {
-        super(texto);
-        setForeground(Color.WHITE); // Color del texto
-        setFont(new Font("Arial", Font.ITALIC, 20)); // Fuente del texto
-        setBorder(BorderFactory.createLineBorder(Color.BLACK, 2)); // Borde negro
-        setFocusPainted(false); // Quitar el enfoque
-        setContentAreaFilled(false); // Permitir personalizar el fondo
+        public BotonEstilizado(String texto) {
+            super(texto);
+            setForeground(Color.WHITE); // Color del texto
+            setFont(new Font("Arial", Font.ITALIC, 20)); // Fuente del texto
+            setBorder(BorderFactory.createLineBorder(Color.BLACK, 2)); // Borde negro
+            setFocusPainted(false); // Quitar el enfoque
+            setContentAreaFilled(false); // Permitir personalizar el fondo
 
-        // Listener para detectar el hover
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                isHovered = true;
-                repaint(); // Actualizar la pintura
-            }
+            // Listener para detectar el hover
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    isHovered = true;
+                    repaint(); // Actualizar la pintura
+                }
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-                isHovered = false;
-                repaint(); // Actualizar la pintura
-            }
-        });
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    isHovered = false;
+                    repaint(); // Actualizar la pintura
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // Colores del degradado
+            Color colorInicio = isHovered ? new Color(34, 133, 199) : new Color(94, 94, 94); // Gris claro en hover
+            Color colorFin = isHovered ? new Color(94, 94, 94) : new Color(34, 133, 199); // Azul claro en hover
+
+            // Crear el degradado vertical
+            GradientPaint gradient = new GradientPaint(0, 0, colorInicio, 0, getHeight(), colorFin);
+
+            // Dibujar el fondo con el degradado
+            g2.setPaint(gradient);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+
+            super.paintComponent(g); // Pintar el contenido (texto)
+        }
     }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Colores del degradado
-        Color colorInicio = isHovered ? new Color(34, 133, 199) : new Color(94, 94, 94); // Gris claro en hover
-        Color colorFin = isHovered ? new Color(94, 94, 94) : new Color(34, 133, 199);   // Azul claro en hover
-
-        // Crear el degradado vertical
-        GradientPaint gradient = new GradientPaint(0, 0, colorInicio, 0, getHeight(), colorFin);
-
-        // Dibujar el fondo con el degradado
-        g2.setPaint(gradient);
-        g2.fillRect(0, 0, getWidth(), getHeight());
-
-        super.paintComponent(g); // Pintar el contenido (texto)
-    }
-}
 
     private void darPuntos(int equipo) {
+
         if (equipo == 1) {
-            tablero.puntos1.setText(tablero.puntosT.getText());
+            int puntos1Valor = Integer.parseInt(tablero.puntos1.getText());
+            int puntosTValor = Integer.parseInt(tablero.puntosT.getText());
+
+            int sumaPuntos = puntos1Valor + puntosTValor;
+
+            tablero.puntos1.setText(String.valueOf(sumaPuntos));
+            // tablero.puntos1.setText(tablero.puntosT.getText());
         } else if (equipo == 2) {
-            tablero.puntos2.setText(tablero.puntosT.getText());
+            int puntos2Valor = Integer.parseInt(tablero.puntos2.getText());
+            int puntosTValor = Integer.parseInt(tablero.puntosT.getText());
+
+            int sumaPuntos = puntos2Valor + puntosTValor;
+
+            tablero.puntos2.setText(String.valueOf(sumaPuntos));
         }
         tablero.reiniciarPuntos();
         sonidoController.reproducirWinRonda();
@@ -308,29 +353,46 @@ public class Control extends javax.swing.JPanel {
                 e.printStackTrace();
             }
         }
+        ordenarTablaPorPuntos();
+        premarcarRespuestas(Color.black);
     }
 
     // Método para cargar el siguiente grupo
     private void cargarSiguienteGrupo() {
+        tablero.actualizarTabla(new Object[][] {});
+        tablero.reiniciarPuntos();
         if (grupoActual < grupos.size()) {
             cargarGrupoActual(); // Cargar los datos del grupo actual
             grupoActual++; // Pasar al siguiente grupo
+            ordenarTablaPorPuntos();
+            initHigligthRow();
+            premarcarRespuestas(Color.black);
+            System.out.println("color negro siguiente");
         } else {
             JOptionPane.showMessageDialog(this, "Ya no hay más preguntas.");
+            return;
         }
     }
 
     // Método para cargar el grupo anterior
     private void cargarGrupoAnterior() {
+        tablero.actualizarTabla(new Object[][] {});
         if (grupoActual > 0) {
             grupoActual--; // Retrocede al grupo anterior
+            ordenarTablaPorPuntos();
             cargarGrupoActual(); // Cargar los datos del grupo actual
+            initHigligthRow();
+            premarcarRespuestas(Color.black);
+            
+            System.out.println("color negro anterior");
         } else {
             JOptionPane.showMessageDialog(this, "Ya estás en la pregunta 1..");
+            return;
         }
     }
 
     private void cargarGrupoActual() {
+        ordenarTablaPorPuntos();
         if (grupoActual >= 0 && grupoActual < grupos.size()) {
             List<String[]> grupo = grupos.get(grupoActual); // Obtener el grupo actual
             modeloTablaControl.setRowCount(0); // Limpia la tabla
@@ -346,16 +408,79 @@ public class Control extends javax.swing.JPanel {
                     modeloTablaControl.addRow(new Object[] { fila[0], Integer.parseInt(fila[1]) });
                 }
             }
+            premarcarRespuestas(Color.black);
         }
     }
 
+    private void ordenarTablaPorPuntos() {
+        tablero.ordenarTablaPorPuntos();
+        // Verifica si la tabla y su modelo no son nulos
+        if (tablaControl != null && modeloTablaControl != null) {
+            // Crear un TableRowSorter basado en el modelo de la tabla
+            TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(modeloTablaControl);
+
+            // Configurar el sorter a la tabla
+            tablaControl.setRowSorter(sorter);
+
+            // Crear una lista con el criterio de orden: columna "PUNTOS" (índice 1)
+            // descendente
+            List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+            sortKeys.add(new RowSorter.SortKey(1, SortOrder.DESCENDING));
+
+            // Asignar las claves de orden al sorter
+            sorter.setSortKeys(sortKeys);
+            sorter.sort(); // Ejecutar la ordenación
+        }
+    }
+
+    private void premarcarRespuestas(Color color) {
+        
+        tablero.ordenarTablaPorPuntos();
+        tablero.colorTabla(color);
+        int rowCount = modeloTablaControl.getRowCount();
+        Object[][] datos = new Object[rowCount][2];
+        for (int i = 0; i < rowCount; i++) {
+            datos[i][0] = modeloTablaControl.getValueAt(i, 0);
+            datos[i][1] = modeloTablaControl.getValueAt(i, 1);
+        }
+        // Enviar datos al Tablero
+        tablero.actualizarTabla(datos);
+    }
+
+    
+    private void actualizarColor(int row) {
+        highlightedRow[row] = row;
+        System.out.println("Row: " + row);
+        System.out.println("Highlighted: " + highlightedRow.length);
+        
+        // Asignar renderer a todas las columnas
+        for (int i = 0; i < tablaTablero.getColumnCount(); i++) {
+            tablaTablero.getColumnModel().getColumn(i).setCellRenderer(renderer);
+        }
+    }
+
+    // Metodo para sumar los puntos de las respuestas correctas a puntosT
     private void enviarPuntos(int row) {
-        Object respuesta = modeloTablaControl.getValueAt(row, 0);
-        Object puntos = modeloTablaControl.getValueAt(row, 1);
+        int modelRow = tablaControl.convertRowIndexToModel(row);
+        Object respuesta = modeloTablaControl.getValueAt(modelRow, 0);
+        Object puntos = modeloTablaControl.getValueAt(modelRow, 1);
+        //premarcarRespuestas(new Color(250, 130, 32));
         if (respuesta != null && puntos != null) {
             int puntosInt = (int) puntos;
+            if (puntosInt == 0)
+                return;
+            DefaultTableModel tableroTabla = tablero.getRespuestasModel();
+            int numRows = tableroTabla.getRowCount();
+            /*for (int i = 0; i < numRows; i++) {
+                if (tableroTabla.getValueAt(i, 0) == respuesta) {
+                    return;
+                }
+            }*/
             tablero.actualizarPuntos(puntosInt);
+
             tablero.agregarFilaOrdenada(new Object[] { respuesta, puntos });
+            //System.out.println("actualizar color row");
+            actualizarColor(row);
         }
     }
 
