@@ -128,7 +128,6 @@ public class Control extends javax.swing.JPanel {
             btnAsignarFila.setBounds((getWidth() - tableWidth) / 2 + tableWidth + 10, 70 + (i * 30), 100, 30);
             btnAsignarFila.addActionListener(e -> {
                 enviarPuntos(row);
-                sonidoController.reproducirRCorrect();
             });
             this.add(btnAsignarFila);
         }
@@ -464,6 +463,10 @@ public class Control extends javax.swing.JPanel {
 
     // Metodo para sumar los puntos de las respuestas correctas a puntosT
     private void enviarPuntos(int row) {
+        if(row>=tablaControl.getRowCount()){
+            return;
+        }
+        System.out.println(row);
         int modelRow = tablaControl.convertRowIndexToModel(row);
         Object respuesta = modeloTablaControl.getValueAt(modelRow, 0);
         Object puntos = modeloTablaControl.getValueAt(modelRow, 1);
@@ -472,17 +475,15 @@ public class Control extends javax.swing.JPanel {
             int puntosInt = (int) puntos;
             if (puntosInt == 0)
                 return;
-            DefaultTableModel tableroTabla = tablero.getRespuestasModel();
-            int numRows = tableroTabla.getRowCount();
-            /*
-             * for (int i = 0; i < numRows; i++) {
-             * if (tableroTabla.getValueAt(i, 0) == respuesta) {
-             * return;
-             * }
-             * }
-             */
-            tablero.actualizarPuntos(puntosInt);
+            
+            
 
+            if(highlightedRow[row] != -1){
+                return;
+            }
+
+            tablero.actualizarPuntos(puntosInt);
+            sonidoController.reproducirRCorrect();
             tablero.agregarFilaOrdenada(new Object[] { respuesta, puntos });
             // System.out.println("actualizar color row");
             actualizarColor(row);
