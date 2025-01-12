@@ -35,153 +35,159 @@ public class Tablero extends javax.swing.JPanel {
     JLabel tiempo = new javax.swing.JLabel();
     Sonidos sonidoController = new Sonidos();
     Control control = new Control(this);
-    ImageIcon rPuntos, tacheGris, tacheRojo;
+    ImageIcon rPuntos, tacheGris, tacheRojo,resizedTacheRojo,resizedTacheGris;
     JLabel[] tachesEquipo1 = new JLabel[3];
     private static JTable tablaRespuestas;
-        private DefaultTableModel modeloTabla;
-        public static boolean pausa = false;/////// cambiar a false para que funja :p
-        public static boolean pausaTaches = false;/////// cambiar a false para que funja :p
-        private int totalPuntos = 0;
+    private DefaultTableModel modeloTabla;
+    public static boolean pausa = false;/////// cambiar a false para que funja :p
+    public static boolean pausaTaches = false;/////// cambiar a false para que funja :p
+    private int totalPuntos = 0;
+    private int tacheSize = 400;
     
-    
-        public DefaultTableModel getRespuestasModel() {
-            return modeloTabla;
-        }
-    
-        public void colorTabla(Color color) {
-            tablaRespuestas.setForeground(color);
-        }
-        /**
-         * Creates new form Tablero
-         */
-        public Tablero() {
-            initComponents();
-            // iniciarCronometro();
-    
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-            int width = (int) screenSize.getWidth();
-            int height = (int) screenSize.getHeight();
-            this.setOpaque(true);
-            this.setBackground(new java.awt.Color(0, 118, 181));
-            this.setSize(width, height);
-    
-            rPuntos = new ImageIcon(getClass().getResource("/assets/images/rPuntos.png"));
-    
-            Image scaledImage = rPuntos.getImage().getScaledInstance(250, 120, Image.SCALE_SMOOTH);
-            rPuntos = new ImageIcon(scaledImage);
-    
-            tacheGris = new ImageIcon(getClass().getResource("/assets/images/tacheGris.png"));
-            tacheRojo = new ImageIcon(getClass().getResource("/assets/images/tacheRojo.png"));
-    
-            puntos1.setBounds(20, 20, 250, 120);
-            puntos1.setFont(new java.awt.Font("Tahoma", 0, 80));
-            puntos1.setForeground(new java.awt.Color(255, 255, 255));
-            puntos1.setText("000");
-            puntos1.setIcon(rPuntos);
-            puntos1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-            puntos1.setVerticalTextPosition(javax.swing.SwingConstants.CENTER);
-            this.add(puntos1);
-    
-            puntos2.setBounds(width - 290, 20, 250, 120);
-            puntos2.setFont(new java.awt.Font("Tahoma", 0, 80));
-            puntos2.setIcon(rPuntos);
-            puntos2.setForeground(new java.awt.Color(255, 255, 255));
-            puntos2.setText("000");
-            puntos2.setIcon(rPuntos);
-            puntos2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-            puntos2.setVerticalTextPosition(javax.swing.SwingConstants.CENTER);
-            this.add(puntos2);
-    
-            puntosT.setBounds(width / 2 - 100, 20, 250, 120);
-            puntosT.setFont(new java.awt.Font("Tahoma", 0, 150));
-            puntosT.setForeground(new java.awt.Color(247, 245, 134));
-            puntosT.setText("000");
-            this.add(puntosT);
-            modeloTabla = new DefaultTableModel(new Object[] { "RESPUESTAS", "PUNTOS" }, 0) {
-                @Override
-                public void addRow(Object[] rowData) {
-                    if (getRowCount() < 8) {
-                        super.addRow(rowData);
-                    }
+
+    public DefaultTableModel getRespuestasModel() {
+        return modeloTabla;
+    }
+
+    public void colorTabla(Color color) {
+        tablaRespuestas.setForeground(color);
+    }
+
+    /**
+     * Creates new form Tablero
+     */
+    public Tablero() {
+        initComponents();
+        // iniciarCronometro();
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int width = (int) screenSize.getWidth();
+        int height = (int) screenSize.getHeight();
+        this.setOpaque(true);
+        this.setBackground(new java.awt.Color(0, 118, 181));
+        this.setSize(width, height);
+
+        rPuntos = new ImageIcon(getClass().getResource("/assets/images/rPuntos.png"));
+
+        Image scaledImage = rPuntos.getImage().getScaledInstance(250, 120, Image.SCALE_SMOOTH);
+        rPuntos = new ImageIcon(scaledImage);
+
+        tacheGris = new ImageIcon(getClass().getResource("/assets/images/tacheGris.png"));
+        tacheRojo = new ImageIcon(getClass().getResource("/assets/images/tacheRojo.png"));
+
+        puntos1.setBounds(20, 20, 250, 120);
+        puntos1.setFont(new java.awt.Font("Tahoma", 0, 80));
+        puntos1.setForeground(new java.awt.Color(255, 255, 255));
+        puntos1.setText("000");
+        puntos1.setIcon(rPuntos);
+        puntos1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        puntos1.setVerticalTextPosition(javax.swing.SwingConstants.CENTER);
+        this.add(puntos1);
+
+        puntos2.setBounds(width - 290, 20, 250, 120);
+        puntos2.setFont(new java.awt.Font("Tahoma", 0, 80));
+        puntos2.setIcon(rPuntos);
+        puntos2.setForeground(new java.awt.Color(255, 255, 255));
+        puntos2.setText("000");
+        puntos2.setIcon(rPuntos);
+        puntos2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        puntos2.setVerticalTextPosition(javax.swing.SwingConstants.CENTER);
+        this.add(puntos2);
+
+        puntosT.setBounds(width / 2 - 100, 20, 250, 120);
+        puntosT.setFont(new java.awt.Font("Tahoma", 0, 150));
+        puntosT.setForeground(new java.awt.Color(247, 245, 134));
+        puntosT.setText("000");
+        this.add(puntosT);
+        modeloTabla = new DefaultTableModel(new Object[] { "RESPUESTAS", "PUNTOS" }, 0) {
+            @Override
+            public void addRow(Object[] rowData) {
+                if (getRowCount() < 8) {
+                    super.addRow(rowData);
                 }
-            };
-    
-            tablaRespuestas = new JTable(modeloTabla) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-    
-                /*
-                 * @Override
-                 * public Component prepareRenderer(TableCellRenderer renderer, int row, int
-                 * column) {
-                 * Component component = super.prepareRenderer(renderer, row, column);
-                 * if (component instanceof JComponent) {
-                 * ((JComponent) component).setOpaque(false); // Hacer las celdas transparentes
-                 * }
-                 * return component;
-                 * }
-                 */
-            };
-            tablaRespuestas.setFont(new java.awt.Font("Tahoma", 1, 40));
-            tablaRespuestas.setOpaque(false);
-            tablaRespuestas.setBackground(Color.BLACK);
-            tablaRespuestas.setForeground(new Color(250, 130, 32));
-            tablaRespuestas.setGridColor(Color.white);
-            tablaRespuestas.setRowHeight(60);
-            tablaRespuestas.setShowGrid(true);
-    
-            // Centrar texto en las celdas
-            DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-            centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-    
-            for (int i = 0; i < tablaRespuestas.getColumnCount(); i++) {
-                tablaRespuestas.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
             }
-    
-            JScrollPane scrollPane = new JScrollPane(tablaRespuestas);
-            int tableWidth = 700;
-            scrollPane.setOpaque(false);
-            scrollPane.getViewport().setOpaque(false);
-            scrollPane.setBounds((getWidth() - tableWidth) / 2, 200, tableWidth, 510);
-            add(scrollPane);
-            // Add taches at the bottom, centered horizontally
-            int tacheSize = 250;
-            int totalTachesWidth = tacheSize * 3;
-            int startX = (width - totalTachesWidth) / 2;
-    
-            for (int i = 0; i < 3; i++) {
-                ImageIcon resizedTacheGris = new ImageIcon(
-                        tacheGris.getImage().getScaledInstance(tacheSize, tacheSize, Image.SCALE_SMOOTH));
-                tachesEquipo1[i] = new JLabel(resizedTacheGris);
-                tachesEquipo1[i].setBounds(startX + (i * tacheSize), height / 2 - tacheSize / 2, tacheSize, tacheSize);
-                tachesEquipo1[i].setVisible(false);
-                this.add(tachesEquipo1[i]);
+        };
+
+        tablaRespuestas = new JTable(modeloTabla) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
             }
-    
-            setVisible(true);
-    
+
+            /*
+             * @Override
+             * public Component prepareRenderer(TableCellRenderer renderer, int row, int
+             * column) {
+             * Component component = super.prepareRenderer(renderer, row, column);
+             * if (component instanceof JComponent) {
+             * ((JComponent) component).setOpaque(false); // Hacer las celdas transparentes
+             * }
+             * return component;
+             * }
+             */
+        };
+        tablaRespuestas.setFont(new java.awt.Font("Tahoma", 1, 40));
+        tablaRespuestas.setOpaque(false);
+        tablaRespuestas.setBackground(Color.BLACK);
+        tablaRespuestas.setForeground(new Color(250, 130, 32));
+        tablaRespuestas.setGridColor(Color.white);
+        tablaRespuestas.setRowHeight(60);
+        tablaRespuestas.setShowGrid(true);
+
+        // Centrar texto en las celdas
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+
+        for (int i = 0; i < tablaRespuestas.getColumnCount(); i++) {
+            tablaRespuestas.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
-    
-        public JLabel getPuntos1() {
-            return puntos1;
+
+        JScrollPane scrollPane = new JScrollPane(tablaRespuestas);
+        int tableWidth = 700;
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBounds((getWidth() - tableWidth) / 2, 200, tableWidth, 510);
+        add(scrollPane);
+        // Add taches at the bottom, centered horizontally
+
+        int totalTachesWidth = tacheSize * 3;
+        int startX = (width - totalTachesWidth) / 2;
+
+        resizedTacheGris = new ImageIcon(
+                tacheGris.getImage().getScaledInstance(tacheSize, tacheSize, Image.SCALE_SMOOTH));
+
+        resizedTacheRojo = new ImageIcon(
+                tacheRojo.getImage().getScaledInstance(tacheSize, tacheSize, Image.SCALE_SMOOTH));
+
+        for (int i = 0; i < 3; i++) {
+            tachesEquipo1[i] = new JLabel(resizedTacheGris);
+            tachesEquipo1[i].setBounds(startX + (i * tacheSize), height / 2 - tacheSize / 2, tacheSize, tacheSize);
+            tachesEquipo1[i].setVisible(false);
+            this.add(tachesEquipo1[i]);
         }
-    
-        public void setPuntosT(JLabel puntosT) {
-            this.puntosT = puntosT;
-        }
-    
-        public JLabel getPuntos2() {
-            return puntos2;
-        }
-    
-        public JLabel getPuntosT() {
-            return puntosT;
-        }
-    
-        public static JTable getTablaRespuestas() {
-            return tablaRespuestas;
+
+        setVisible(true);
+
+    }
+
+    public JLabel getPuntos1() {
+        return puntos1;
+    }
+
+    public void setPuntosT(JLabel puntosT) {
+        this.puntosT = puntosT;
+    }
+
+    public JLabel getPuntos2() {
+        return puntos2;
+    }
+
+    public JLabel getPuntosT() {
+        return puntosT;
+    }
+
+    public static JTable getTablaRespuestas() {
+        return tablaRespuestas;
     }
 
     public void actualizarTabla(Object[][] datos) {
@@ -198,7 +204,7 @@ public class Tablero extends javax.swing.JPanel {
     }
 
     public void agregarFilaOrdenada(Object[] fila) {
-        //modeloTabla.addRow(fila);
+        // modeloTabla.addRow(fila);
         ordenarTablaPorPuntos();
     }
 
@@ -239,6 +245,13 @@ public class Tablero extends javax.swing.JPanel {
         sorter.sort();
     }
 
+    public void reiniciarTaches() {
+        control.tacheCount = 0;
+        for (int i = 0; i < 3; i++) {
+            tachesEquipo1[i].setIcon(resizedTacheGris);
+        }
+    }
+
     public void iniciarCronometro() {
         System.out.println("Iniciando cronometro");
         Thread cronometro = new Thread(() -> {
@@ -277,7 +290,6 @@ public class Tablero extends javax.swing.JPanel {
     }
 
     public void iniciarCronometroTaches() {
-        System.out.println("Iniciando cronometro taches");
         Thread cronometroTache = new Thread(() -> {
             control.marcarTache();
             reanudarCronometroTaches();
@@ -286,6 +298,7 @@ public class Tablero extends javax.swing.JPanel {
                 while (!pausaTaches) {
                     try {
                         for (int i = 0; i < 3; i++) {
+                            this.setComponentZOrder(tachesEquipo1[i], 0);
                             tachesEquipo1[i].setVisible(true);
                         }
                         while (segundos >= 0) {
@@ -320,7 +333,7 @@ public class Tablero extends javax.swing.JPanel {
 
     public void marcarError(int numeroError) {
         if (numeroError <= 3) {
-            tachesEquipo1[numeroError - 1].setIcon(tacheRojo);
+            tachesEquipo1[numeroError - 1].setIcon(resizedTacheRojo);
         }
     }
 

@@ -52,7 +52,7 @@ public class Control extends javax.swing.JPanel {
     private JTable tablaControl;
     private DefaultTableModel modeloTablaControl;
     private Tablero tablero;
-    private int tacheCount = 0;
+    public int tacheCount = 0;
     private List<List<String[]>> grupos; // Lista para almacenar los grupos
     private int grupoActual = 0;
     private Label pregunta = new Label();
@@ -60,8 +60,9 @@ public class Control extends javax.swing.JPanel {
     Sonidos sonidoController = new Sonidos();
     private JTable tablaTablero = Tablero.getTablaRespuestas();
     private int[] highlightedRow = new int[8]; // Usar un arreglo para que sea mutable
-    
+
     DefaultTableCellRenderer renderer;
+
     /**
      * Creates new form Control
      */
@@ -201,11 +202,12 @@ public class Control extends javax.swing.JPanel {
         this.setVisible(true);
     }
 
-    private void initHigligthRow(){
+    private void initHigligthRow() {
         for (int i = 0; i < highlightedRow.length; i++) {
             highlightedRow[i] = -1;
         }
     }
+
     public class BotonEstilizado extends JButton {
 
         private boolean isHovered = false; // Para manejar el estado de hover
@@ -359,15 +361,16 @@ public class Control extends javax.swing.JPanel {
 
     // Método para cargar el siguiente grupo
     private void cargarSiguienteGrupo() {
-        tablero.actualizarTabla(new Object[][] {});
-        tablero.reiniciarPuntos();
+
         if (grupoActual < grupos.size()) {
+            tablero.reiniciarTaches();
+            tablero.actualizarTabla(new Object[][] {});
+            tablero.reiniciarPuntos();
             cargarGrupoActual(); // Cargar los datos del grupo actual
             grupoActual++; // Pasar al siguiente grupo
             ordenarTablaPorPuntos();
             initHigligthRow();
             premarcarRespuestas(Color.black);
-            System.out.println("color negro siguiente");
         } else {
             JOptionPane.showMessageDialog(this, "Ya no hay más preguntas.");
             return;
@@ -376,15 +379,16 @@ public class Control extends javax.swing.JPanel {
 
     // Método para cargar el grupo anterior
     private void cargarGrupoAnterior() {
-        tablero.actualizarTabla(new Object[][] {});
+
         if (grupoActual > 0) {
+            tablero.reiniciarTaches();
+            tablero.actualizarTabla(new Object[][] {});
+            tablero.reiniciarPuntos();
+            cargarGrupoActual(); // Cargar los datos del grupo actual
             grupoActual--; // Retrocede al grupo anterior
             ordenarTablaPorPuntos();
-            cargarGrupoActual(); // Cargar los datos del grupo actual
             initHigligthRow();
             premarcarRespuestas(Color.black);
-            
-            System.out.println("color negro anterior");
         } else {
             JOptionPane.showMessageDialog(this, "Ya estás en la pregunta 1..");
             return;
@@ -434,7 +438,7 @@ public class Control extends javax.swing.JPanel {
     }
 
     private void premarcarRespuestas(Color color) {
-        
+
         tablero.ordenarTablaPorPuntos();
         tablero.colorTabla(color);
         int rowCount = modeloTablaControl.getRowCount();
@@ -447,12 +451,11 @@ public class Control extends javax.swing.JPanel {
         tablero.actualizarTabla(datos);
     }
 
-    
     private void actualizarColor(int row) {
         highlightedRow[row] = row;
         System.out.println("Row: " + row);
         System.out.println("Highlighted: " + highlightedRow.length);
-        
+
         // Asignar renderer a todas las columnas
         for (int i = 0; i < tablaTablero.getColumnCount(); i++) {
             tablaTablero.getColumnModel().getColumn(i).setCellRenderer(renderer);
@@ -464,22 +467,24 @@ public class Control extends javax.swing.JPanel {
         int modelRow = tablaControl.convertRowIndexToModel(row);
         Object respuesta = modeloTablaControl.getValueAt(modelRow, 0);
         Object puntos = modeloTablaControl.getValueAt(modelRow, 1);
-        //premarcarRespuestas(new Color(250, 130, 32));
+        // premarcarRespuestas(new Color(250, 130, 32));
         if (respuesta != null && puntos != null) {
             int puntosInt = (int) puntos;
             if (puntosInt == 0)
                 return;
             DefaultTableModel tableroTabla = tablero.getRespuestasModel();
             int numRows = tableroTabla.getRowCount();
-            /*for (int i = 0; i < numRows; i++) {
-                if (tableroTabla.getValueAt(i, 0) == respuesta) {
-                    return;
-                }
-            }*/
+            /*
+             * for (int i = 0; i < numRows; i++) {
+             * if (tableroTabla.getValueAt(i, 0) == respuesta) {
+             * return;
+             * }
+             * }
+             */
             tablero.actualizarPuntos(puntosInt);
 
             tablero.agregarFilaOrdenada(new Object[] { respuesta, puntos });
-            //System.out.println("actualizar color row");
+            // System.out.println("actualizar color row");
             actualizarColor(row);
         }
     }
