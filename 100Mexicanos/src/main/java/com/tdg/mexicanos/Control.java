@@ -60,7 +60,7 @@ public class Control extends javax.swing.JPanel {
     Sonidos sonidoController = new Sonidos();
     private JTable tablaTablero = Tablero.getTablaRespuestas();
     private int[] highlightedRow = new int[8]; // Usar un arreglo para que sea mutable
-
+    private int ronda = 1;
     DefaultTableCellRenderer renderer;
 
     /**
@@ -164,6 +164,22 @@ public class Control extends javax.swing.JPanel {
         });
         this.add(btnMarcarTache);
 
+        // Botón para sonido de taches
+        JButton btnSonidoTache = new BotonEstilizado("Sonido Tache");
+        btnSonidoTache.setBounds(width / 2 + 150, 540, 200, 50);
+        btnSonidoTache.addActionListener(e -> {
+            sonidoController.reproducirError();
+        });
+        this.add(btnSonidoTache);
+
+        // Botón elegir ronda
+        JButton btnNumRonda = new BotonEstilizado("Ronda: " + ronda);
+        btnNumRonda.setBounds(width / 2 - 100, 610, 200, 50);
+        btnNumRonda.addActionListener(e -> {
+            this.contarRonda(btnNumRonda);
+        });
+        this.add(btnNumRonda);
+
         // Botón para sonar la campana
         JButton btnFinTiempo = new BotonEstilizado("poco tiempo");
         btnFinTiempo.setBounds(width / 2 - 350, 540, 200, 50);
@@ -206,6 +222,17 @@ public class Control extends javax.swing.JPanel {
             highlightedRow[i] = -1;
         }
     }
+
+    private void contarRonda(JButton btnNumRonda) {
+        if (ronda == 3) {
+            ronda = 0;
+        }
+        ronda++;
+        btnNumRonda.setText("ronda: " +ronda);
+        
+    }
+
+    // private void
 
     public class BotonEstilizado extends JButton {
 
@@ -263,6 +290,7 @@ public class Control extends javax.swing.JPanel {
 
             int sumaPuntos = puntos1Valor + puntosTValor;
 
+
             tablero.puntos1.setText(String.valueOf(sumaPuntos));
             // tablero.puntos1.setText(tablero.puntosT.getText());
         } else if (equipo == 2) {
@@ -271,10 +299,15 @@ public class Control extends javax.swing.JPanel {
 
             int sumaPuntos = puntos2Valor + puntosTValor;
 
+            
             tablero.puntos2.setText(String.valueOf(sumaPuntos));
         }
         tablero.reiniciarPuntos();
         sonidoController.reproducirWinRonda();
+    }
+
+    public int getRonda() {
+        return ronda;
     }
 
     private void guardarDatos() {
@@ -452,8 +485,6 @@ public class Control extends javax.swing.JPanel {
 
     private void actualizarColor(int row) {
         highlightedRow[row] = row;
-        System.out.println("Row: " + row);
-        System.out.println("Highlighted: " + highlightedRow.length);
 
         // Asignar renderer a todas las columnas
         for (int i = 0; i < tablaTablero.getColumnCount(); i++) {
@@ -463,10 +494,9 @@ public class Control extends javax.swing.JPanel {
 
     // Metodo para sumar los puntos de las respuestas correctas a puntosT
     private void enviarPuntos(int row) {
-        if(row>=tablaControl.getRowCount()){
+        if (row >= tablaControl.getRowCount()) {
             return;
         }
-        System.out.println(row);
         int modelRow = tablaControl.convertRowIndexToModel(row);
         Object respuesta = modeloTablaControl.getValueAt(modelRow, 0);
         Object puntos = modeloTablaControl.getValueAt(modelRow, 1);
@@ -475,17 +505,14 @@ public class Control extends javax.swing.JPanel {
             int puntosInt = (int) puntos;
             if (puntosInt == 0)
                 return;
-            
-            
 
-            if(highlightedRow[row] != -1){
+            if (highlightedRow[row] != -1) {
                 return;
             }
 
-            tablero.actualizarPuntos(puntosInt);
+            tablero.actualizarPuntos(puntosInt * getRonda());
             sonidoController.reproducirRCorrect();
             tablero.agregarFilaOrdenada(new Object[] { respuesta, puntos });
-            // System.out.println("actualizar color row");
             actualizarColor(row);
         }
     }

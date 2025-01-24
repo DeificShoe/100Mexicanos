@@ -35,7 +35,7 @@ public class Tablero extends javax.swing.JPanel {
     JLabel tiempo = new javax.swing.JLabel();
     Sonidos sonidoController = new Sonidos();
     Control control = new Control(this);
-    ImageIcon rPuntos, tacheGris, tacheRojo,resizedTacheRojo,resizedTacheGris;
+    ImageIcon rPuntos, tacheGris, tacheRojo, resizedTacheRojo, resizedTacheGris;
     JLabel[] tachesEquipo1 = new JLabel[3];
     private static JTable tablaRespuestas;
     private DefaultTableModel modeloTabla;
@@ -43,7 +43,6 @@ public class Tablero extends javax.swing.JPanel {
     public static boolean pausaTaches = false;/////// cambiar a false para que funja :p
     private int totalPuntos = 0;
     private int tacheSize = 400;
-    
 
     public DefaultTableModel getRespuestasModel() {
         return modeloTabla;
@@ -253,7 +252,6 @@ public class Tablero extends javax.swing.JPanel {
     }
 
     public void iniciarCronometro() {
-        System.out.println("Iniciando cronometro");
         Thread cronometro = new Thread(() -> {
             int segundos = 6;
             while (!Thread.currentThread().isInterrupted()) {
@@ -338,6 +336,7 @@ public class Tablero extends javax.swing.JPanel {
     }
 
     public void actualizarPuntos(int puntos) {
+        
         totalPuntos += puntos;
         puntosT.setText(String.valueOf(totalPuntos));
     }
